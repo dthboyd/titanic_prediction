@@ -18,8 +18,24 @@ train_sur_age = train_raw[['Survived','Age']].dropna(axis=0)
 survived = train_sur_age['Survived'].values
 age = (train_sur_age['Age'].values).reshape(-1, 1)
 
-transformer = MDLP(random_state=666, continuous_features=None)
-age_dis = transformer.fit_transform(age, survived)
-age_bins = transformer.cat2intervals(age_dis, 0)
+n_bins = []
+age_lim = []
+n=1000
+for i in range(n):
+    transformer = MDLP(random_state=i, continuous_features=None)
+    age_dis = transformer.fit_transform(age, survived)
+    age_bins = transformer.cat2intervals(age_dis, 0)
+    n_bins.append(len(set(age_bins)))
+    if len(set(age_bins))==2: age_lim.append(age_bins[0])
+    elif len(set(age_bins))>2: print('\t ! more than two bins, n=', len(set(age_bins)))
 
-print(set(age_bins))
+print('* estimated N bins:', set(n_bins))
+print('\t mean', np.mean(1.*np.array(n_bins)))
+print('* Age thresholds, frequencies')
+lim_val = np.array(age_lim)[:,0]
+
+sum_not_inf = 0
+for val_i in set(lim_val):
+    print('\t', val_i, (1.*sum(lim_val==val_i))/n)
+    sum_not_inf = sum_not_inf+sum(lim_val==val_i)
+print('\t', 'inf', (n-sum_not_inf)/n)
